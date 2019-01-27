@@ -31,9 +31,9 @@ INSERT INTO Musicians
 
 VALUES
 (
-    N'Ljubo iz Siska', N'Serbian'),
-	(N'Ekrem Jevric', N'Albanian'),
-	(N'Ljubomir bibi Štiber', N'Croatian'
+    N'Thompson', N'Croatian'),
+	(N'Jevric Ekrem', N'Albanian'),
+	(N'Štiber Ljubomir', N'Croatian'
 )
 
 INSERT INTO Albums
