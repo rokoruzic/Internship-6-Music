@@ -1,8 +1,8 @@
 BEGIN TRANSACTION
 CREATE TABLE Musicians(
 	MusicianId INT IDENTITY (1,1) PRIMARY KEY,
-	Name nvarchar(100),
-	Nationality nvarchar(50)
+	Name nvarchar(100)NOT NULL,
+	Nationality nvarchar(50) NOT NULL
 )
 
 CREATE TABLE Albums(
