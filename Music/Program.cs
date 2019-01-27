@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Dapper;
+using DatabaseConnection.Models;
 
 namespace Music
 {
@@ -126,53 +127,12 @@ namespace Music
 			}
 		}
 
-		public class Musician
-		{
-			public int MusicianId { get; set; }
-			public string Name { get; set; }
-			public string Nationality { get; set; }
-			public List<Album> Albums { get; set; }
+		
 
-			public Musician()
-			{
-				Albums = new List<Album>();
-			}
-		}
+		
 
-		public class Album
-		{
-			public int MusicianId { get; set; }
-			public int AlbumId { get; set; }
-			public string Name { get; set; }
-			public DateTime DateOfPublish { get; set; }
-			public Musician Musician { get; set; }
-			public List<Song> Songs { get; set; }
+		
 
-			public Album()
-			{
-				Songs = new List<Song>();
-			}
-		}
-
-		public class Song
-		{
-			public int SongId { get; set; }
-			public string Name { get; set; }
-			public int DurationInSeconds { get; set; }
-			public List<Album> Albums { get; set; }
-
-			public Song()
-			{
-				Albums = new List<Album>();
-			}
-		}
-
-		public class AlbumSong
-		{
-			public int AlbumId { get; set; }
-			public int SongId { get; set; }
-			public Song Song { get; set; }
-			public Album Album { get; set; }
-		}
+		
 	}
 }
