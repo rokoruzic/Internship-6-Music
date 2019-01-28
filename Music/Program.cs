@@ -1,135 +1,120 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Dapper;
 using DatabaseConnection.Models;
 
 namespace Music
 {
-	class Program
-	{
-		static void Main(string[] args)
-		{
-			var connectionString =
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            var connectionString =
                 "Data Source=DESKTOP-H2HCQOK;Initial Catalog=MusicDatabase;Integrated Security=true;MultipleActiveResultSets=true";
-			using (var connection = new SqlConnection(connectionString))
-			{
-				var musicians = connection.Query<Musician>("select * from musicians").ToList();
-				var albums = connection.Query<Album>("select * from albums").ToList();
-				var songs = connection.Query<Song>("select * from songs").ToList();
-				var albumsSongs = connection.Query<AlbumSong>("select * from albumsSongs").ToList();
+            using (var connection = new SqlConnection(connectionString))
+            {
+                var musicians = connection.Query<Musician>("select * from musicians").ToList();
+                var albums = connection.Query<Album>("select * from albums").ToList();
+                var songs = connection.Query<Song>("select * from songs").ToList();
+                var albumsSongs = connection.Query<AlbumSong>("select * from albumsSongs").ToList();
 
-				foreach (var album in albums)
-				{
-					foreach (var musician in musicians)
-					{
-						if (album.MusicianId == musician.MusicianId)
-						{
-							musician.Albums.Add(album);
-							album.Musician = musician;
-						}
-					}
-				}
+                foreach (var album in albums)
+                {
+                    foreach (var musician in musicians)
+                    {
+                        if (album.MusicianId == musician.MusicianId)
+                        {
+                            musician.Albums.Add(album);
+                            album.Musician = musician;
+                        }
+                    }
+                }
 
-				foreach (var albumsSong in albumsSongs)
-				{
-					foreach (var album in albums)
-					{
-						if (albumsSong.AlbumId == album.AlbumId)
-							albumsSong.Album = album;
-					}
+                foreach (var albumsSong in albumsSongs)
+                {
+                    foreach (var album in albums)
+                    {
+                        foreach (var song in songs)
+                        {
+                            if (albumsSong.SongId == song.SongId && album.AlbumId == albumsSong.AlbumId)
+                            {
+                                song.Albums.Add(album);
+                            }
 
-					foreach (var song in songs)
-					{
-						if (albumsSong.SongId == song.SongId) albumsSong.Song = song;
-					}
-				}
+                            if (albumsSong.AlbumId == album.AlbumId && song.SongId == albumsSong.SongId)
+                            {
+                                album.Songs.Add(song);
+                            }
+                        }
+                    }
+                }
 
-				foreach (var albumSongs in albumsSongs)
-				{
-					foreach (var album in albums)
-					{
-						if (albumSongs.AlbumId == album.AlbumId)
-							album.Songs.Add(albumSongs.Song);
-					}
+                //#1 linq
+                var sortedMusicians = musicians.OrderBy(x => x.Name).ToList();
+                Console.WriteLine("Musicians ordered by their name:");
+                sortedMusicians.ForEach(x => Console.WriteLine(x.Name));
+                Console.Write("\n");
 
-					foreach (var song in songs)
-						if (albumSongs.SongId == song.SongId)
-							song.Albums.Add(albumSongs.Album);
-				}
+                //#2 linq
+                var musiciansByNationality = musicians.Where(x => x.Nationality == "Croatian").ToList();
+                Console.WriteLine("Croatian musicians:");
+                musiciansByNationality.ForEach(x => Console.WriteLine(x.Name));
+                Console.Write("\n");
 
-				//#1 linq
-				var sortedMusicians = musicians.OrderBy(x => x.Name).ToList();
-				Console.WriteLine("Musicians ordered by their name:");
-				sortedMusicians.ForEach(x => Console.WriteLine(x.Name));
-				Console.Write("\n");
+                //#3 linq
+                var groupedByAlbums = albums
+                    .GroupBy(x => x.DateOfPublish, y => y, (key, g) => new {DateOfPublish = key, Name = g}).ToList();
+                foreach (var groupedByAlbum in groupedByAlbums)
+                {
+                    Console.WriteLine("Albums that are published in year '{0}':", groupedByAlbum.DateOfPublish.Year);
+                    foreach (var nameAlbum in groupedByAlbum.Name)
+                    {
+                        Console.WriteLine($"Album name:{nameAlbum.Name} Author: {nameAlbum.Musician.Name}");
+                    }
+                }
 
-				//#2 linq
-				var musiciansByNationality = musicians.Where(x => x.Nationality == "Croatian").ToList();
-				Console.WriteLine("Croatian musicians:");
-				musiciansByNationality.ForEach(x => Console.WriteLine(x.Name));
-				Console.Write("\n");
+                Console.Write("\n");
 
-				//#3 linq
-				var groupedByAlbums = albums
-					.GroupBy(x => x.DateOfPublish, y => y, (key, g) => new {DateOfPublish = key, Name = g}).ToList();
-				foreach (var groupedByAlbum in groupedByAlbums)
-				{
-					Console.WriteLine("Albums that are published in year '{0}':", groupedByAlbum.DateOfPublish.Year);
-					foreach (var nameAlbum in groupedByAlbum.Name)
-					{
-						Console.WriteLine($"Album name:{nameAlbum.Name} Author: {nameAlbum.Musician.Name}");
-					}
-				}
+                //#4 linq
+                var albumsWithSpecificName = albums.Where(x => x.Name.Contains("Ne")).ToList();
+                Console.WriteLine("Albums that contain word 'Ne' are:");
+                albumsWithSpecificName.ForEach(x => Console.WriteLine(x.Name));
+                Console.Write("\n");
 
-				Console.Write("\n");
+                //#5 linq
+                var albumsWithSongsDuration =
+                    albums.GroupBy(x => x.Songs, y => y.Name, (key, s) => new {song = key, album = s}).ToList();
+                foreach (var albumWithSongsDuration in albumsWithSongsDuration)
+                {
+                    foreach (var albumName in albumWithSongsDuration.album)
+                    {
+                        Console.WriteLine("Duration of album '{0}':", albumName);
+                        var albumSongsDuration = 0;
+                        foreach (var songsDuration in albumWithSongsDuration.song)
+                        {
+                            albumSongsDuration += songsDuration.DurationInSeconds;
+                        }
 
-				//#4 linq
-				var albumsWithSpecificName = albums.Where(x => x.Name.Contains("Ne")).ToList();
-				Console.WriteLine("Albums that contain word 'Ne' are:");
-				albumsWithSpecificName.ForEach(x => Console.WriteLine(x.Name));
-				Console.Write("\n");
+                        Console.WriteLine($"{albumSongsDuration} seconds.");
+                    }
+                }
 
-				//#5 linq
-				var albumsWithSongsDuration =
-					albums.GroupBy(x => x.Songs, y => y.Name, (key, s) => new {song = key, album = s}).ToList();
-				foreach (var albumWithSongsDuration in albumsWithSongsDuration)
-				{
-					foreach (var albumName in albumWithSongsDuration.album)
-					{
-						Console.WriteLine("Duration of album '{0}':", albumName);
-						var albumSongsDuration = 0;
-						foreach (var songsDuration in albumWithSongsDuration.song)
-						{
-							albumSongsDuration += songsDuration.DurationInSeconds;
-						}
+                Console.Write("\n");
 
-						Console.WriteLine($"{albumSongsDuration} seconds.");
-					}
-				}
+                //#6 linq
+                Console.WriteLine("Albums that include 'Gadith je noob' song:");
+                var songsWithSpecificName = songs.Where(x => x.Name == "Gadith je noob").ToList();
+                songsWithSpecificName.ForEach(x => x.Albums.ForEach(y => Console.WriteLine(y.Name)));
+                Console.Write("\n");
 
-				Console.Write("\n");
-
-				//#6 linq
-				Console.WriteLine("Albums that include 'Gadith je noob' song:");
-				var songsWithSpecificName = songs.Where(x => x.Name == "Gadith je noob").ToList();
-				songsWithSpecificName.ForEach(x => x.Albums.ForEach(y => Console.WriteLine(y.Name)));
-				Console.Write("\n");
-
-				//#7 linq
-				var albumsOfMusicianAfterGivenDate = albums.Where(x => x.Musician.Name == "Jevric Ekrem")
-					.Where(x => x.DateOfPublish.Year > 2005).ToList();
-				Console.WriteLine("Songs from Ekrem Jevric's album that are published after 2005");
-				albumsOfMusicianAfterGivenDate.ForEach(x => x.Songs.ForEach(y => Console.WriteLine(y.Name)));
-			}
-		}
-
-		
-
-		
-
-		
-
-		
-	}
+                //#7 linq
+                var albumsOfMusicianAfterGivenDate = albums.Where(x => x.Musician.Name == "Jevric Ekrem")
+                    .Where(x => x.DateOfPublish.Year > 2005).ToList();
+                Console.WriteLine("Songs from Ekrem Jevric's album that are published after 2005");
+                albumsOfMusicianAfterGivenDate.ForEach(x => x.Songs.ForEach(y => Console.WriteLine(y.Name)));
+            }
+        }
+    }
 }
