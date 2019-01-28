@@ -21,33 +21,17 @@ namespace DatabaseConnection
 
                 foreach (var album in albums)
                 {
-                    foreach (var musician in musicians)
-                    {
-                        if (album.MusicianId == musician.MusicianId)
-                        {
-                            musician.Albums.Add(album);
-                            album.Musician = musician;
-                        }
-                    }
+                    var musician = musicians.FirstOrDefault(x => x.MusicianId == album.MusicianId);
+                    musician.Albums.Add(album);
+                    album.Musician = musician;
                 }
 
                 foreach (var albumsSong in albumsSongs)
                 {
-                    foreach (var album in albums)
-                    {
-                        foreach (var song in songs)
-                        {
-                            if (albumsSong.SongId == song.SongId && album.AlbumId == albumsSong.AlbumId)
-                            {
-                                song.Albums.Add(album);
-                            }
-
-                            if (albumsSong.AlbumId == album.AlbumId && song.SongId == albumsSong.SongId)
-                            {
-                                album.Songs.Add(song);
-                            }
-                        }
-                    }
+                    var album = albums.FirstOrDefault(x => x.AlbumId == albumsSong.AlbumId);
+                    var song = songs.FirstOrDefault(x => x.SongId == albumsSong.SongId);
+                    song.Albums.Add(album);
+                    album.Songs.Add(song);
                 }
 
                 //#1 linq
