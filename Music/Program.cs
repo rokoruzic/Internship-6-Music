@@ -11,7 +11,7 @@ namespace Music
 		static void Main(string[] args)
 		{
 			var connectionString =
-				"Data Source=DESKTOP-C0JACUB;Initial Catalog=MusicDatabase;Integrated Security=true;MultipleActiveResultSets=true";
+                "Data Source=DESKTOP-H2HCQOK;Initial Catalog=MusicDatabase;Integrated Security=true;MultipleActiveResultSets=true";
 			using (var connection = new SqlConnection(connectionString))
 			{
 				var musicians = connection.Query<Musician>("select * from musicians").ToList();
