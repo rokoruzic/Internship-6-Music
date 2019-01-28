@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using Dapper;
 using DatabaseConnection.Models;
 
-namespace Music
+namespace DatabaseConnection
 {
     class Program
     {
